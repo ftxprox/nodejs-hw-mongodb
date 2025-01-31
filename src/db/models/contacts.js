@@ -5,6 +5,7 @@ const contactsSchema = new Schema(
     name: {
       type: String,
       required: true,
+      index: true,
     },
     phoneNumber: {
       type: String,
@@ -16,15 +17,20 @@ const contactsSchema = new Schema(
     isFavourite: {
       type: Boolean,
       default: false,
+      index: true,
     },
     contactType: {
       type: String,
       enum: ['work', 'home', 'personal'],
       required: true,
       default: 'personal',
+      index: true,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
 );
 
 export const ContactsCollection = model('contacts', contactsSchema);
