@@ -16,4 +16,4 @@ export const initMongoConnection = async () => {
     console.log('Error while setting up mongo connection', e);
     throw e;
   }
-};hw3-crud
+};
