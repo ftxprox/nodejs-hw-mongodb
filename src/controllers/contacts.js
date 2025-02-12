@@ -7,13 +7,23 @@ import {
 } from '../services/contacts.js';
 import createHttpError from 'http-errors';
 
-export const getContactsController = async (req, res, next) => {
-  const contacts = await getAllContacts();
-  res.json({
-    status: 200,
-    message: 'Successfully found contacts!',
-    data: contacts,
-  });
+export const getContactsController = async (req, res) => {
+    const { page, perPage } = parsePaginationParams(req.query);
+    const { sortBy, sortOrder } = parseSortParams(req.query);
+    const filter = parseFilterParams(req.query);
+    const contacts = await getAllContacts({
+        page,
+        perPage,
+        sortBy,
+        sortOrder,
+        filter,
+    });
+
+    res.json({
+        status: 200,
+        message: 'Successfully found contacts!',
+        data: contacts,
+    });
 };
 
 export const getContactByIdController = async (req, res, next) => {
@@ -40,50 +50,6 @@ export const createContactController = async (req, res, next) => {
     data: contact,
   });
 };
-
-//export const patchContactController = async (req, res, next) => {
-//  const { contactId } = req.params;
-//  const result = await updateContact(contactId, req.body);
-
-//  if (!result) {
-//    return next(createHttpError(404, 'Contact not found'));
-//  }
-
-//  res.json({
-//    status: 200,
-//    message: `Successfully updated the contact!`,
-//    data: result.contact,
-//  });
-//};
-
-
-//export const patchContactController = async (req, res, next) => {
-//    const { contactId } = req.params;
-//    const updatedContact = await updateContact(contactId, req.body);
-
-//    if (!updatedContact) {
-//        return next(createHttpError(404, 'Contact not found'));
-//    }
-
-//    res.json({
-//        status: 200,
-//        message: `Successfully updated the contact!`,
-//        data: updatedContact,
-//    });
-//};
-
-
-//export const patchContactController = async (req, res, next) => {
-//    const { contactId } = req.params;
-//    const updatedContact = await updateContact(contactId, req.body);
-
-//    if (!updatedContact) {
-//        return next(createHttpError(404, 'Contact not found'));
-//    }
-
-//    res.json(updatedContact);
-//};
-
 
 export const patchContactController = async (req, res, next) => {
     const { contactId } = req.params;
