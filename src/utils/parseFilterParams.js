@@ -7,7 +7,8 @@ const parseEnam = (enam) => {
     return isValidContactType ? enam : undefined;
 };
 
-const parseFilterParams = (query) => {
+
+export const parseFilterParams = (query) => {
     const { type, isFavorite } = query;
 
     const parsedContactType = parseEnam(type);
@@ -19,5 +20,3 @@ const parseFilterParams = (query) => {
         isFavourite: parsedIsFavorite,
     };
 };
-
-export default parseFilterParams;
