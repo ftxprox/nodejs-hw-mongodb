@@ -1,8 +1,6 @@
 import { SORT_ORDER } from '../contacts/index.js';
 import { ContactsCollection } from '../db/models/contacts.js';
 import { calculatePaginationData } from '../utils/calculatePaginationData.js';
-
-
 export const getContactById = async (userId, contactId) => {
     try {
         const contact = await ContactsCollection.findOne({
