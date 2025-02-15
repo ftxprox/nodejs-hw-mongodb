@@ -1,97 +1,99 @@
-import { loginUser, logoutUser, registerUser } from '../services/auth.js';
-import { ONE_DAY } from '../constants/index.js';
+import {
+    deleteContact,
+    getAllContacts,
+    getContactById,
+    updateContact,
+} from '../services/contacts.js';
+import createError from 'http-errors';
+import { createContact } from '../services/contacts.js';
+import createHttpError from 'http-errors';
+import { parsePaginationParams } from '../utils/parsePaginationParams.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parseFilterParams } from '../utils/parseFilterParams.js';
 
-import { refreshUsersSession } from '../services/auth.js';
 
-export const registerUserController = async (req, res) => {
-    const user = await registerUser(req.body);
+export const getContactByIdController = async (req, res, next) => {
+    try {
+        const { contactId } = req.params;
+        const { _id: userId } = req.user;
+        const contact = await getContactById(userId, contactId);
+        if (!contact) {
+            throw createError(404, 'Contact not found');
+        }
+
+        res.json({
+            status: 200,
+            message: `Successfully found contact with id ${contactId}!`,
+            data: contact,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const createContactController = async (req, res) => {
+    const { _id: userId } = req.user;
+    const contact = await createContact({ ...req.body, userId });
 
     res.status(201).json({
         status: 201,
-        message: 'Successfully registered a user!',
-        data: user,
+        message: `Successfully created a student!`,
+        data: contact,
     });
 };
 
-export const loginUserController = async (req, res) => {
-    const session = await loginUser(req.body);
+export const patchContactController = async (req, res, next) => {
+    const { contactId } = req.params;
+    const { _id: userId } = req.user;
+    const result = await updateContact(userId, contactId, req.body);
 
-    console.log('Session after login:', session);
-
-    res.cookie('refreshToken', session.refreshToken, {
-        httpOnly: true,
-        expires: new Date(Date.now() + ONE_DAY),
-    });
-    res.cookie('sessionId', session._id, {
-        httpOnly: true,
-        expires: new Date(Date.now() + ONE_DAY),
-    });
-
-    console.log('Cookies set:', {
-        refreshToken: session.refreshToken,
-        sessionId: session._id,
-    });
+    if (!result) {
+        next(createHttpError(404, 'Contact not found'));
+        return;
+    }
 
     res.json({
         status: 200,
-        message: 'Successfully logged in an user!',
-        data: {
-            accessToken: session.accessToken,
-        },
+        message: `Successfully patched a contact!`,
+        data: result.contact,
     });
 };
 
-export const logoutUserController = async (req, res) => {
-    console.log('Cookies:', req.cookies);
-    console.log('Session ID:', req.cookies.sessionId);
+export const deleteContactController = async (req, res, next) => {
+    const { contactId } = req.params;
+    const { _id: userId } = req.user;
 
-    if (req.cookies.sessionId) {
-        await logoutUser(req.cookies.sessionId);
+    const contact = await deleteContact(contactId, userId);
+
+    if (!contact) {
+        next(createHttpError(404, 'Contact not found'));
+        return;
     }
-
-    res.clearCookie('sessionId');
-    res.clearCookie('refreshToken');
 
     res.status(204).send();
 };
 
-const setupSession = (res, session) => {
-    res.cookie('refreshToken', session.refreshToken, {
-        httpOnly: true,
-        expires: new Date(Date.now() + ONE_DAY),
+export const getContactsController = async (req, res) => {
+    const { page, perPage } = parsePaginationParams(req.query);
+
+    const { sortBy, sortOrder } = parseSortParams(req.query);
+
+    const filter = parseFilterParams(req.query);
+
+    const { _id: userId } = req.user;
+
+    const contacts = await getAllContacts({
+        page,
+        perPage,
+        sortBy,
+        sortOrder,
+        filter,
+        userId,
     });
-    res.cookie('sessionId', session._id, {
-        httpOnly: true,
-        expires: new Date(Date.now() + ONE_DAY),
-    });
-};
-
-export const refreshUserSessionController = async (req, res) => {
-
-    console.log('Cookies at refresh:', req.cookies);
-    console.log('Session ID:', req.cookies.sessionId);
-    console.log('Refresh Token:', req.cookies.refreshToken);
-
-    if (!req.cookies.sessionId || !req.cookies.refreshToken) {
-        console.log('Missing sessionId or refreshToken!');
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-
-    const session = await refreshUsersSession({
-        sessionId: req.cookies.sessionId,
-        refreshToken: req.cookies.refreshToken,
-    });
-
-    console.log('New session:', session);
-
-    setupSession(res, session);
 
     res.json({
         status: 200,
-        message: 'Successfully refreshed a session!',
-        data: {
-            accessToken: session.accessToken,
-        },
+        message: 'Successfully found contacts!',
+        data: contacts,
     });
 };
