@@ -1,10 +1,7 @@
-import bcrypt from 'bcrypt';
-
+import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
-
 import { UsersCollection } from '../db/models/user.js';
 import createHttpError from 'http-errors';
-
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/index.js';
 import { SessionsCollection } from '../db/models/session.js';
 
@@ -27,36 +24,32 @@ export const loginUser = async (payload) => {
     }
 
     const isEqual = await bcrypt.compare(payload.password, user.password);
-
     if (!isEqual) {
         throw createHttpError(401, 'Unauthorized');
     }
 
     await SessionsCollection.deleteOne({ userId: user._id });
 
-    const accessToken = randomBytes(30).toString('base64');
-    const refreshToken = randomBytes(30).toString('base64');
+    const session = createSession();
 
     return await SessionsCollection.create({
         userId: user._id,
-        accessToken,
-        refreshToken,
-        accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-        refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
+        ...session,
     });
 };
 
 export const logoutUser = async (sessionId) => {
-    await SessionsCollection.deleteOne({ _id: sessionId });
+    const result = await SessionsCollection.deleteOne({ _id: sessionId });
+
+    if (result.deletedCount === 0) {
+        throw createHttpError(404, 'Session not found');
+    }
 };
 
 const createSession = () => {
-    const accessToken = randomBytes(30).toString('base64');
-    const refreshToken = randomBytes(30).toString('base64');
-
     return {
-        accessToken,
-        refreshToken,
+        accessToken: randomBytes(30).toString('hex'),
+        refreshToken: randomBytes(30).toString('hex'),
         accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
         refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
     };
@@ -72,18 +65,13 @@ export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
         throw createHttpError(401, 'Session not found');
     }
 
-    const isSessionTokenExpired =
-        new Date() > new Date(session.refreshTokenValidUntil);
-
-    if (isSessionTokenExpired) {
+    if (new Date() > new Date(session.refreshTokenValidUntil)) {
         throw createHttpError(401, 'Session token expired');
     }
 
     await SessionsCollection.deleteOne({ _id: sessionId, refreshToken });
 
     const newSession = createSession();
-
-    await SessionsCollection.deleteOne({ _id: sessionId, refreshToken });
 
     return await SessionsCollection.create({
         userId: session.userId,
