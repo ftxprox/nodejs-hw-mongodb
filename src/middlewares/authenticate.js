@@ -7,7 +7,7 @@ export const authenticate = async (req, res, next) => {
     const authHeader = req.get('Authorization');
 
     if (!authHeader) {
-        next(createHttpError(401, 'Please provide Authorization header'));
+        next(createHttpError(401, 'Please provide Authorization header!'));
         return;
     }
 
