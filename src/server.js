@@ -13,7 +13,6 @@ const PORT = process.env.PORT || 3000;
 export function setupServer() {
     const app = express();
 
-
     app.use(express.json());
 
     app.use(cors());
