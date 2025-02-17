@@ -9,14 +9,14 @@ const parseEnam = (enam) => {
 
 
 export const parseFilterParams = (query) => {
-    const { type, isFavorite } = query;
+    const { type, isFavourite } = query;
 
     const parsedContactType = parseEnam(type);
-    const parsedIsFavorite =
-        isFavorite === 'true' ? true : isFavorite === 'false' ? false : undefined;
+    const parsedIsFavourite =
+        isFavourite === 'true' ? true : isFavourite === 'false' ? false : undefined;
 
     return {
         type: parsedContactType,
-        isFavourite: parsedIsFavorite,
+        isFavourite: parsedIsFavourite,
     };
 };

@@ -15,10 +15,14 @@ import {
 } from '../validation/contacts.js';
 import { authenticate } from '../middlewares/authenticate.js';
 
+
 import { upload } from '../middlewares/multer.js';
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 773adf3de7a58b86a64146da0d0f4d0b291677df
 const router = Router();
 
 router.use(authenticate);
@@ -39,6 +43,9 @@ router.patch(
     '/:contactId',
     isValidId,
     upload.single('photo'),
+router.patch(
+    '/:contactId',
+    isValidId,
     validateBody(updateContactSchema),
     ctrlWrapper(patchContactController),
 );
