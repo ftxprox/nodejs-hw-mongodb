@@ -10,31 +10,11 @@ import createHttpError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
 
-export const getContactsController = async (req, res) => {
-    const { page, perPage } = parsePaginationParams(req.query);
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
 
-    const { sortBy, sortOrder } = parseSortParams(req.query);
-
-    const filter = parseFilterParams(req.query);
-
-    const { _id: userId } = req.user;
-
-    const contacts = await getAllContacts({
-        page,
-        perPage,
-        sortBy,
-        sortOrder,
-        filter,
-        userId,
-    });
-
-    res.json({
-        status: 200,
-        message: 'Successfully found contacts!',
-        data: contacts,
-    });
-};
 
 export const getContactByIdController = async (req, res, next) => {
     try {
@@ -42,9 +22,11 @@ export const getContactByIdController = async (req, res, next) => {
         const { _id: userId } = req.user;
         const contact = await getContactById(userId, contactId);
 
+
         if (!contact) {
             throw createError(404, 'Contact not found');
         }
+
 
         res.json({
             status: 200,
@@ -56,21 +38,56 @@ export const getContactByIdController = async (req, res, next) => {
     }
 };
 
-export const createContactController = async (req, res) => {
-    const { _id: userId } = req.user;
-    const contact = await createContact({ ...req.body, userId });
+export const createContactController = async (req, res, next) => {
+    try {
+        const { _id: userId } = req.user;
+        const photo = req.file;
 
-    res.status(201).json({
-        status: 201,
-        message: `Successfully created a student!`,
-        data: contact,
-    });
+        let photoUrl;
+        if (photo) {
+            if (getEnvVar('ENABLE_CLOUDINARY') === 'true') {
+                photoUrl = await saveFileToCloudinary(photo);
+            } else {
+                photoUrl = await saveFileToUploadDir(photo);
+            }
+        }
+
+        const contact = await createContact({
+            ...req.body,
+            userId,
+            photo: photoUrl,
+        });
+
+        res.status(201).json({
+            status: 201,
+            message: `Successfully created a student!`,
+            data: contact,
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 export const patchContactController = async (req, res, next) => {
     const { contactId } = req.params;
     const { _id: userId } = req.user;
-    const result = await updateContact(userId, contactId, req.body);
+
+    const photo = req.file;
+
+    let photoUrl;
+
+    if (photo) {
+        if (getEnvVar('ENABLE_CLOUDINARY') === 'true') {
+            photoUrl = await saveFileToCloudinary(photo);
+        } else {
+            photoUrl = await saveFileToUploadDir(photo);
+        }
+    }
+
+    const result = await updateContact(userId, contactId, {
+        ...req.body,
+        photo: photoUrl,
+    });
 
     if (!result) {
         next(createHttpError(404, 'Contact not found'));
@@ -98,3 +115,27 @@ export const deleteContactController = async (req, res, next) => {
     res.status(204).send();
 };
 
+export const getContactsController = async (req, res) => {
+    const { page, perPage } = parsePaginationParams(req.query);
+
+    const { sortBy, sortOrder } = parseSortParams(req.query);
+
+    const filter = parseFilterParams(req.query);
+
+    const { _id: userId } = req.user;
+
+    const contacts = await getAllContacts({
+        page,
+        perPage,
+        sortBy,
+        sortOrder,
+        filter,
+        userId,
+    });
+
+    res.json({
+        status: 200,
+        message: 'Successfully found contacts!',
+        data: contacts,
+    });
+};
