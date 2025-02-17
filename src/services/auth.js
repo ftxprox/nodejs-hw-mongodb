@@ -87,7 +87,6 @@ export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
         throw createHttpError(401, 'Session token expired');
     }
 
-    // кікаю стару сесію перед створенням нової
     await SessionsCollection.deleteOne({ _id: sessionId, refreshToken });
 
     const newSession = createSession();
