@@ -43,9 +43,6 @@ router.patch(
     '/:contactId',
     isValidId,
     upload.single('photo'),
-router.patch(
-    '/:contactId',
-    isValidId,
     validateBody(updateContactSchema),
     ctrlWrapper(patchContactController),
 );
