@@ -1,21 +1,22 @@
 import { loginUser, logoutUser, registerUser } from '../services/auth.js';
 import { ONE_DAY } from '../constants/index.js';
-import { refreshUsersSession } from '../services/auth.js';
 import { requestResetToken } from '../services/auth.js';
 import { resetPassword } from '../services/auth.js';
+import { refreshUsersSession } from '../services/auth.js';
+
 export const registerUserController = async (req, res) => {
     const user = await registerUser(req.body);
 
     res.status(201).json({
         status: 201,
-        message: 'Successfully registered a user!',
+
+        message: 'Successfully registered a user!!!',
         data: user,
     });
 };
 
 export const loginUserController = async (req, res) => {
     const session = await loginUser(req.body);
-
 
     console.log('Session after login:', session);
 
@@ -35,7 +36,7 @@ export const loginUserController = async (req, res) => {
 
     res.json({
         status: 200,
-        message: 'Successfully logged in an user!',
+        message: 'Successfully logged in an user!!!!',
         data: {
             accessToken: session.accessToken,
         },
@@ -55,6 +56,7 @@ export const logoutUserController = async (req, res) => {
 
     res.status(204).send();
 };
+
 const setupSession = (res, session) => {
     res.cookie('refreshToken', session.refreshToken, {
         httpOnly: true,
@@ -92,6 +94,7 @@ export const refreshUserSessionController = async (req, res) => {
             accessToken: session.accessToken,
         },
     });
+
 };
 
 export const requestResetEmailController = async (req, res) => {
