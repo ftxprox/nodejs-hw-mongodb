@@ -1,4 +1,4 @@
-ags:
+tags:
   - Contacts
 summary: Update contact
 operationId: updateContact
