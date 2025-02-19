@@ -8,17 +8,14 @@ import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import cookieParser from 'cookie-parser';
 
 import { UPLOAD_DIR } from './constants/index.js';
-
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
 
 const PORT = process.env.PORT || 3000;
 
 export function setupServer() {
-
     const app = express();
 
-
     app.use(express.json());
-
 
     app.use(cors());
 
@@ -34,9 +31,13 @@ export function setupServer() {
 
     app.use(router);
 
+    app.use('/uploads', express.static(UPLOAD_DIR));
+    app.use('/api-docs', swaggerDocs());
+
     app.use('*', notFoundHandler);
 
     app.use(errorHandler);
+
 
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
